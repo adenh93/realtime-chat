@@ -3,6 +3,8 @@ use tokio::net::{TcpListener, TcpStream};
 
 #[tokio::main]
 async fn main() {
+    tracing_subscriber::fmt().compact().init();
+
     let addr = env::args()
         .skip(1)
         .next()
@@ -10,10 +12,13 @@ async fn main() {
 
     let listener = TcpListener::bind(&addr).await.unwrap();
 
+    tracing::info!("Server listening on {}", &addr);
+
     loop {
-        let (mut socket, _addr) = listener.accept().await.unwrap();
+        let (mut socket, addr) = listener.accept().await.unwrap();
 
         tokio::spawn(async move {
+            tracing::info!("New client connection from {:?}", addr);
             process_connection(&mut socket).await;
         });
     }
