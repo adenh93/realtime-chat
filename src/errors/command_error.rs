@@ -2,7 +2,7 @@ use thiserror::Error;
 
 const HELP_MSG: &str = "See /help for a list of all commands.";
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, PartialEq)]
 pub enum CommandError {
     #[error("Too many arguments provided to command.")]
     TooManyArguments,
