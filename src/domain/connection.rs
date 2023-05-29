@@ -1,5 +1,4 @@
-use super::{Peer, State, Username};
-use crate::message::Message;
+use super::{Message, Peer, State, Username};
 use futures::{SinkExt, StreamExt};
 use std::net::SocketAddr;
 use tokio::net::TcpStream;
