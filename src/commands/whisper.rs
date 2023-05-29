@@ -9,6 +9,10 @@ pub struct Whisper {
 }
 
 impl Whisper {
+    pub fn new(username: String, message: String) -> Self {
+        Self { username, message }
+    }
+
     fn format_message(&self, prefix: &str, username: &str) -> String {
         format!("{} {}: {}", prefix, username, self.message)
     }

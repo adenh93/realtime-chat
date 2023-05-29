@@ -41,8 +41,52 @@ impl TryFrom<&str> for Command {
             "help" => Self::Help(Help {}),
             "whisper" => Self::Whisper(Whisper::try_from(args)?),
             "me" => Self::Me(Me::try_from(args)?),
-            arg if arg.is_empty() => Err(CommandError::MissingName)?,
-            arg => Err(CommandError::UnknownCommand(arg.into()))?,
+            cmd if cmd.is_empty() => Err(CommandError::MissingName)?,
+            cmd => Err(CommandError::UnknownCommand(cmd.into()))?,
         })
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use fake::faker::internet::en::Username;
+    use fake::faker::lorem::en::Sentence;
+    use fake::{Fake, Faker};
+
+    #[test]
+    fn parses_valid_command() {
+        let username: String = Username().fake();
+        let message: String = Sentence(0..2).fake();
+
+        let value = &format!("whisper {} {}", &username, &message);
+        let command = Command::try_from(value.as_str());
+        let expected = Command::Whisper(Whisper::new(username, message));
+
+        assert_eq!(command, Ok(expected));
+    }
+
+    #[test]
+    fn returns_error_if_command_name_is_empty() {
+        let value = String::new();
+        let command = Command::try_from(value.as_str());
+
+        assert_eq!(command, Err(CommandError::MissingName));
+    }
+
+    #[test]
+    fn returns_error_if_command_name_is_whitespace() {
+        let value = String::from(" ");
+        let command = Command::try_from(value.as_str());
+
+        assert_eq!(command, Err(CommandError::MissingName));
+    }
+
+    #[test]
+    fn returns_error_if_command_name_is_not_registered() {
+        let value = Faker.fake::<String>();
+        let command = Command::try_from(value.as_str());
+
+        assert_eq!(command, Err(CommandError::UnknownCommand(value)));
     }
 }
