@@ -1,4 +1,5 @@
 use super::{Peer, State, Username};
+use crate::message::Message;
 use futures::{SinkExt, StreamExt};
 use std::net::SocketAddr;
 use tokio::net::TcpStream;
@@ -8,9 +9,9 @@ pub type Lines = Framed<TcpStream, LinesCodec>;
 
 #[derive(Debug)]
 pub struct Connection {
-    peer: Peer,
-    lines: Lines,
-    state: State,
+    pub peer: Peer,
+    pub lines: Lines,
+    pub state: State,
 }
 
 impl Connection {
@@ -35,8 +36,7 @@ impl Connection {
                 },
                 result = self.lines.next() => match result {
                     Some(Ok(message)) => {
-                        let message = format!("{}: {}", &self.peer.username.0, &message);
-                        self.state.lock().await.broadcast(self.peer.addr, &message).await;
+                        self.handle_incoming_message(message).await;
                     },
                     Some(Err(e)) => {
                         tracing::error!(
@@ -51,6 +51,25 @@ impl Connection {
         // TODO: Once async trait fns are in Stable Rust, move this
         // into Drop implementation.
         self.on_disconnect().await;
+    }
+
+    pub async fn handle_incoming_message(&mut self, message: String) {
+        match Message::try_from(message) {
+            Ok(Message::Cmd(cmd_type)) => {
+                if let Err(err) = cmd_type.apply(self).await {
+                    let _ = self.lines.send(format!("{err}")).await;
+                }
+            }
+            Ok(Message::Raw(msg)) => {
+                let mut state = self.state.lock().await;
+                let message = format!("{}: {}", &self.peer.username.0, &msg);
+
+                state.broadcast(self.peer.addr, &message).await;
+            }
+            Err(err) => {
+                let _ = self.lines.send(format!("{err}")).await;
+            }
+        }
     }
 
     pub async fn on_connect(&self) {
