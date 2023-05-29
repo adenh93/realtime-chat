@@ -2,6 +2,7 @@ use crate::{domain::Connection, errors::CommandError, traits::CommandApply, util
 use async_trait::async_trait;
 use futures::SinkExt;
 
+#[derive(Debug, PartialEq)]
 pub struct Whisper {
     username: String,
     message: String,

@@ -8,6 +8,7 @@ pub use whisper::*;
 
 use crate::{domain::Connection, errors::CommandError, traits::CommandApply};
 
+#[derive(Debug, PartialEq)]
 pub enum Command {
     Help(Help),
     Whisper(Whisper),

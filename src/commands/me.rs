@@ -1,6 +1,7 @@
 use crate::{domain::Connection, errors::CommandError, traits::CommandApply};
 use async_trait::async_trait;
 
+#[derive(Debug, PartialEq)]
 pub struct Me {
     message: String,
 }

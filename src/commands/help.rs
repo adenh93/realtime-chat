@@ -2,6 +2,7 @@ use crate::{domain::Connection, errors::CommandError, traits::CommandApply};
 use async_trait::async_trait;
 use futures::SinkExt;
 
+#[derive(Debug, PartialEq)]
 pub struct Help {}
 
 impl Help {}
