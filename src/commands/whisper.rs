@@ -70,3 +70,60 @@ impl TryFrom<Vec<&str>> for Whisper {
         Ok(Self { username, message })
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use fake::{
+        faker::{
+            internet::en::Username,
+            lorem::en::{Sentence, Word},
+        },
+        Fake,
+    };
+
+    #[test]
+    fn parses_whisper_command() {
+        let username: &str = &Username().fake::<String>();
+        let message: &str = &Word().fake::<String>();
+        let args = vec![username, message];
+
+        let command = Whisper::try_from(args);
+        let expected = Whisper::new(username.into(), message.into());
+
+        assert_eq!(command, Ok(expected));
+    }
+
+    #[test]
+    fn parses_space_delimited_message_arg() {
+        let username: &str = &Username().fake::<String>();
+        let message: &str = &Sentence(0..2).fake::<String>();
+        let args = vec![username, message];
+
+        let command = Whisper::try_from(args);
+        let expected = Whisper::new(username.into(), message.into());
+
+        assert_eq!(command, Ok(expected));
+    }
+
+    #[test]
+    fn returns_error_if_missing_username_arg() {
+        let args = vec![];
+
+        let command = Whisper::try_from(args);
+        let expected = CommandError::MissingArgument("username".into());
+
+        assert_eq!(command, Err(expected));
+    }
+
+    #[test]
+    fn returns_error_if_missing_message_arg() {
+        let username: &str = &Username().fake::<String>();
+        let args = vec![username];
+
+        let command = Whisper::try_from(args);
+        let expected = CommandError::MissingArgument("message".into());
+
+        assert_eq!(command, Err(expected));
+    }
+}
