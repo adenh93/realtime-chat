@@ -1,4 +1,7 @@
-use crate::{domain::Connection, errors::CommandError, traits::CommandApply, utils::try_pop_arg};
+use crate::{
+    domain::Connection, errors::CommandError, frame::Frame, traits::CommandApply,
+    utils::try_pop_arg,
+};
 use async_trait::async_trait;
 use futures::SinkExt;
 
@@ -39,8 +42,8 @@ impl CommandApply for Whisper {
             })?;
 
         // TODO: Implement System Message frame
-        let to_message = self.format_message("To", &self.username);
-        let from_message = self.format_message("From", &conn.peer.username.0);
+        let to_message = Frame::ServerMessage(self.format_message("To", &self.username));
+        let from_message = Frame::ServerMessage(self.format_message("From", &conn.peer.username.0));
 
         // Send the message directly to the connected peer
         target_peer.1.tx.send(from_message).await.map_err(|_| {
@@ -49,7 +52,7 @@ impl CommandApply for Whisper {
 
         // Also send a copy to the sender's stream too.
         // TODO: Review if this should quietly fail
-        let _ = conn.lines.send(to_message).await;
+        let _ = conn.messages.send(to_message).await;
 
         Ok(())
     }

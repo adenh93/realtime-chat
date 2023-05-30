@@ -1,4 +1,4 @@
-use crate::{domain::Connection, errors::CommandError, traits::CommandApply};
+use crate::{domain::Connection, errors::CommandError, frame::Frame, traits::CommandApply};
 use async_trait::async_trait;
 
 #[derive(Debug, PartialEq)]
@@ -17,8 +17,9 @@ impl CommandApply for Me {
     async fn apply(&self, conn: &mut Connection) -> Result<(), CommandError> {
         let mut state = conn.state.lock().await;
         let message = format!("{} is {}", conn.peer.username.0, self.message);
+        let frame = Frame::ServerMessage(message);
 
-        state.broadcast(conn.peer.addr, &message).await;
+        state.broadcast(conn.peer.addr, frame).await;
 
         Ok(())
     }

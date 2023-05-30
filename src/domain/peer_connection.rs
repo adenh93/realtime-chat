@@ -1,7 +1,8 @@
+use crate::frame::Frame;
 use std::net::SocketAddr;
 use tokio::sync::mpsc;
 
-pub type Tx = mpsc::Sender<String>;
+pub type Tx = mpsc::Sender<Frame>;
 
 #[derive(Debug)]
 pub struct PeerConnection {

@@ -1,4 +1,4 @@
-use crate::{commands::Command, errors::MessageError};
+use crate::{commands::Command, errors::MessageError, frame::Frame};
 
 #[derive(Debug, PartialEq)]
 pub enum Message {
@@ -6,10 +6,12 @@ pub enum Message {
     Cmd(Command),
 }
 
-impl TryFrom<String> for Message {
+impl TryFrom<Frame> for Message {
     type Error = MessageError;
 
-    fn try_from(value: String) -> Result<Self, Self::Error> {
+    fn try_from(value: Frame) -> Result<Self, Self::Error> {
+        let value = value.message();
+
         Ok(match value.chars().next() {
             Some('/') => Self::Cmd(
                 Command::try_from(&value[1..]).map_err(|err| MessageError::CommandFailure(err))?,
@@ -30,7 +32,7 @@ mod test {
 
     #[test]
     fn parses_command_if_prefixed_with_forward_slash() {
-        let value = String::from("/help");
+        let value = Frame::Message(String::from("/help"));
         let message = Message::try_from(value);
 
         assert_eq!(message, Ok(Message::Cmd(Command::Help(Help {}))));
@@ -38,7 +40,7 @@ mod test {
 
     #[test]
     fn returns_error_if_fails_to_parse_command() {
-        let value = String::from("/");
+        let value = Frame::Message(String::from("/"));
         let message = Message::try_from(value);
 
         assert_eq!(
@@ -49,15 +51,15 @@ mod test {
 
     #[test]
     fn parses_raw_message() {
-        let value: String = Word().fake();
+        let value = Frame::Message(Word().fake());
         let message = Message::try_from(value.clone());
 
-        assert_eq!(message, Ok(Message::Raw(value)))
+        assert_eq!(message, Ok(Message::Raw(value.message())))
     }
 
     #[test]
     fn returns_error_if_trying_to_parse_empty_string() {
-        let value = String::new();
+        let value = Frame::Message(String::new());
         let message = Message::try_from(value.clone());
 
         assert_eq!(message, Err(MessageError::ParseFailure));

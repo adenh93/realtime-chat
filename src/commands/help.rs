@@ -1,4 +1,4 @@
-use crate::{domain::Connection, errors::CommandError, traits::CommandApply};
+use crate::{domain::Connection, errors::CommandError, frame::Frame, traits::CommandApply};
 use async_trait::async_trait;
 use futures::SinkExt;
 
@@ -11,8 +11,10 @@ impl Help {}
 impl CommandApply for Help {
     async fn apply(&self, conn: &mut Connection) -> Result<(), CommandError> {
         // TODO: Generate Command list
-        conn.lines
-            .send(String::from("Reply from HELP"))
+        let frame = Frame::ServerMessage(String::from("Reply from HELP"));
+
+        conn.messages
+            .send(frame)
             .await
             .map_err(|e| CommandError::ExecutionError(e.to_string()))?;
 

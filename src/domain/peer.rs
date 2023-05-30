@@ -1,8 +1,10 @@
+use crate::frame::Frame;
+
 use super::{PeerConnection, State, Username};
 use std::net::SocketAddr;
 use tokio::sync::mpsc;
 
-pub type Rx = mpsc::Receiver<String>;
+pub type Rx = mpsc::Receiver<Frame>;
 
 const CHANNEL_BUFFER: usize = 64;
 
