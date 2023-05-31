@@ -4,11 +4,11 @@ use super::{Messages, Tripcode};
 use futures::StreamExt;
 use std::fmt::Display;
 
-/// A Username is made up of two parts, the username portion, and
+/// A Username is made up of two parts, the nickname portion, and
 /// the tripcode portion.
 ///
 /// When a Username is converted to a string via the Display trait,
-/// it will have the format `<username>!<tripcode>`, for example:
+/// it will have the format `<nickname>!<tripcode>`, for example:
 /// some_user!uQ8unuo3Mk
 ///
 /// A Username should not be constructed directly, but rather via
@@ -16,22 +16,22 @@ use std::fmt::Display;
 ///
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Username {
-    username: String,
+    nickname: String,
     tripcode: String,
 }
 
 impl Username {
     pub async fn from_frame(messages: &mut Messages) -> Result<Self, UsernameError> {
         // Pull the message off of the stream. The message will
-        // have the format username,password e.g. some_user,password123
+        // have the format nickname,password e.g. some_user,password123
         let message = match messages.next().await {
             Some(Ok(frame)) => frame.message(),
             Some(Err(err)) => Err(UsernameError::ReadFailure(err))?,
             _ => Err(UsernameError::NoData)?,
         };
 
-        // Extract username and password from comma-separated pair
-        let (username, password) = message
+        // Extract nickname and password from comma-separated pair
+        let (nickname, password) = message
             .split_once(',')
             .ok_or_else(|| UsernameError::ParseFailure)?;
 
@@ -40,7 +40,7 @@ impl Username {
             .map_err(|err| UsernameError::GenTripcodeFailure(err))?;
 
         Ok(Self {
-            username: username.to_owned(),
+            nickname: nickname.to_owned(),
             tripcode: tripcode.to_string(),
         })
     }
@@ -48,6 +48,6 @@ impl Username {
 
 impl Display for Username {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}!{}", self.username, self.tripcode)
+        write!(f, "{}!{}", self.nickname, self.tripcode)
     }
 }

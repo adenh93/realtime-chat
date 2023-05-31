@@ -1,19 +1,36 @@
+use clap::Parser;
 use futures::{SinkExt, StreamExt};
 use realtime_chat::{codec::MessageCodec, frame::Frame};
-use std::env;
 use tokio::{io::stdin, net::TcpStream};
 use tokio_util::codec::{Framed, FramedRead, LinesCodec};
 
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    /// Address of server to connect to.
+    #[arg(short, long, default_value_t = String::from("127.0.0.1:8080"))]
+    address: String,
+
+    /// Friendly nickname to display to other users.
+    #[arg(short, long)]
+    nickname: String,
+
+    /// Password used to generate Tripcode. This will allow
+    /// you to claim a unique username.
+    #[arg(short, long)]
+    password: String,
+}
+
 #[tokio::main]
 async fn main() {
-    let addr = env::args()
-        .skip(1)
-        .next()
-        .unwrap_or_else(|| "127.0.0.1:8080".to_string());
+    let args = Args::parse();
 
-    let socket = TcpStream::connect(addr).await.unwrap();
+    let socket = TcpStream::connect(args.address).await.unwrap();
     let mut lines = FramedRead::new(stdin(), LinesCodec::new());
     let mut messages = Framed::new(socket, MessageCodec {});
+
+    let username_pair = format!("{},{}", args.nickname, args.password);
+    messages.send(Frame::Message(username_pair)).await.unwrap();
 
     loop {
         tokio::select! {
