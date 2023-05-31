@@ -41,9 +41,9 @@ impl CommandApply for Whisper {
                 CommandError::ExecutionError(format!("No user with username {}", self.username))
             })?;
 
-        // TODO: Implement System Message frame
-        let to_message = Frame::ServerMessage(self.format_message("To", &self.username));
-        let from_message = Frame::ServerMessage(self.format_message("From", &conn.peer.username.0));
+        let to_message = Frame::PrivateMessage(self.format_message("To", &self.username));
+        let from_message =
+            Frame::PrivateMessage(self.format_message("From", &conn.peer.username.0));
 
         // Send the message directly to the connected peer
         target_peer.1.tx.send(from_message).await.map_err(|_| {
