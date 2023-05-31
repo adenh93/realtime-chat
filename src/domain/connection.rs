@@ -16,10 +16,12 @@ pub struct Connection {
 
 impl Connection {
     pub async fn new(socket: TcpStream, addr: SocketAddr, state: State) -> Result<Self, String> {
-        // TODO: Implement custom codec
         let mut messages = Framed::new(socket, MessageCodec {});
 
-        let username = Username::from_frame(&mut messages).await?;
+        let username = Username::from_frame(&mut messages)
+            .await
+            .map_err(|err| format!("Failed to construct username: {:?}", err))?;
+
         let peer = Peer::new(username, addr, state.clone()).await;
 
         let connection = Self {
@@ -68,7 +70,7 @@ impl Connection {
             }
             Ok(Message::Raw(msg)) => {
                 let mut state = self.state.lock().await;
-                let message = format!("{}: {}", &self.peer.username.0, &msg);
+                let message = format!("{}: {}", &self.peer.username.to_string(), &msg);
                 let frame = Frame::Message(message);
 
                 state.broadcast(self.peer.addr, frame).await;
@@ -82,7 +84,7 @@ impl Connection {
 
     pub async fn on_connect(&self) {
         let mut state = self.state.lock().await;
-        let message = format!("{} has joined the chat", self.peer.username.0);
+        let message = format!("{} has joined the chat", self.peer.username.to_string());
         let frame = Frame::ServerMessage(message);
 
         state.broadcast(self.peer.addr, frame).await;
@@ -90,7 +92,7 @@ impl Connection {
 
     pub async fn on_disconnect(&self) {
         let mut state = self.state.lock().await;
-        let message = format!("{} has left the chat", &self.peer.username.0);
+        let message = format!("{} has left the chat", &self.peer.username.to_string());
         let frame = Frame::ServerMessage(message);
 
         state.peers.remove(&self.peer.username);

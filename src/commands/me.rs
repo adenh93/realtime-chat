@@ -16,7 +16,7 @@ impl Me {
 impl CommandApply for Me {
     async fn apply(&self, conn: &mut Connection) -> Result<(), CommandError> {
         let mut state = conn.state.lock().await;
-        let message = format!("{} is {}", conn.peer.username.0, self.message);
+        let message = format!("{} is {}", conn.peer.username.to_string(), self.message);
         let frame = Frame::ServerMessage(message);
 
         state.broadcast(conn.peer.addr, frame).await;

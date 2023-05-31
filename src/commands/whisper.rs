@@ -27,7 +27,7 @@ impl CommandApply for Whisper {
         let state = conn.state.lock().await;
 
         // If the sender tries to message their own username, do nothing.
-        if self.username == conn.peer.username.0 {
+        if self.username == conn.peer.username.to_string() {
             return Ok(());
         }
 
@@ -36,14 +36,14 @@ impl CommandApply for Whisper {
         let target_peer = state
             .peers
             .iter()
-            .find(|peer| peer.0 .0 == self.username)
+            .find(|peer| peer.0.to_string() == self.username)
             .ok_or_else(|| {
                 CommandError::ExecutionError(format!("No user with username {}", self.username))
             })?;
 
         let to_message = Frame::PrivateMessage(self.format_message("To", &self.username));
         let from_message =
-            Frame::PrivateMessage(self.format_message("From", &conn.peer.username.0));
+            Frame::PrivateMessage(self.format_message("From", &conn.peer.username.to_string()));
 
         // Send the message directly to the connected peer
         target_peer.1.tx.send(from_message).await.map_err(|_| {
